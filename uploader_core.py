@@ -3,6 +3,7 @@ import re
 import sys
 import struct
 import subprocess
+import tempfile
 from telethon import TelegramClient, errors
 from telethon.tl.types import DocumentAttributeVideo
 
@@ -175,13 +176,13 @@ class TelegramService:
     # ═════════════════════════════════════════════════════════════
     def remux_faststart(self, input_path):
         """Copia streams sin re-codificar y pone moov al inicio. Muy rapido."""
-        output_path = input_path.rsplit(".", 1)[0] + "_fs.mp4"
+        # Generar la ruta en la carpeta temporal de Windows/OS
+        filename = os.path.basename(input_path).rsplit(".", 1)[0] + "_fs.mp4"
+        output_path = os.path.join(tempfile.gettempdir(), filename)
+        
         cmd = [
-            FFMPEG_PATH,
-            "-y",
-            "-i", input_path,
-            "-c", "copy",
-            "-movflags", "+faststart",
+            FFMPEG_PATH, "-y", "-i", input_path,
+            "-c", "copy", "-movflags", "+faststart",
             output_path,
         ]
         process = subprocess.run(cmd, **_silent_subprocess_kwargs())
@@ -196,19 +197,16 @@ class TelegramService:
     # RE-ENCODE (solo cuando el codec NO es compatible)
     # ═════════════════════════════════════════════════════════════
     def encode_video(self, input_path):
-        output_path = input_path.rsplit(".", 1)[0] + "_encoded.mp4"
+        # Generar la ruta en la carpeta temporal de Windows/OS
+        filename = os.path.basename(input_path).rsplit(".", 1)[0] + "_encoded.mp4"
+        output_path = os.path.join(tempfile.gettempdir(), filename)
+        
         cmd = [
-            FFMPEG_PATH,
-            "-y",
-            "-i", input_path,
-            "-c:v", "libx264",
-            "-preset", "veryfast",
-            "-crf", "23",
-            "-pix_fmt", "yuv420p",
+            FFMPEG_PATH, "-y", "-i", input_path,
+            "-c:v", "libx264", "-preset", "veryfast",
+            "-crf", "23", "-pix_fmt", "yuv420p",
             "-vf", "scale=trunc(iw/2)*2:trunc(ih/2)*2",
-            "-c:a", "aac",
-            "-b:a", "128k",
-            "-ac", "2",
+            "-c:a", "aac", "-b:a", "128k", "-ac", "2",
             "-movflags", "+faststart",
             output_path,
         ]
@@ -224,8 +222,9 @@ class TelegramService:
     # THUMBNAIL (max 320px, JPEG <200KB)
     # ═════════════════════════════════════════════════════════════
     def generate_thumbnail(self, video_path, duration):
-        raw_thumb = "thumb_raw.jpg"
-        final_thumb = "thumb.jpg"
+        # Usar la carpeta temporal
+        raw_thumb = os.path.join(tempfile.gettempdir(), "thumb_raw.jpg")
+        final_thumb = os.path.join(tempfile.gettempdir(), "thumb.jpg")
         seek_time = max(0.1, duration * 0.1)
 
         cmd = [
