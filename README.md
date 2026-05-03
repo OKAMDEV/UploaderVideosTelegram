@@ -255,5 +255,3 @@ Distribuido bajo licencia **MIT**. Ver `LICENSE` para más información.
 ---
 
 ⭐ Si este proyecto te fue útil, ¡considera darle una estrella en GitHub!
-"
-Observation: Create successful: /app/telegram_uploader_fix/README.md
