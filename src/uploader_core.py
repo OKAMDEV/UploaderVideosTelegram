@@ -32,6 +32,20 @@ class TelegramService:
     def __init__(self, session_path, api_id, api_hash):
         self.client = TelegramClient(session_path, int(api_id), api_hash)
         self.phone = None
+        self.current_process = None  # Rastrear proceso FFmpeg actual
+
+    def stop_process(self):
+        """Termina forzosamente el proceso de FFmpeg si está activo."""
+        if self.current_process and self.current_process.poll() is None:
+            try:
+                self.current_process.terminate()
+                self.current_process.wait(timeout=2)
+            except:
+                try:
+                    self.current_process.kill()
+                except:
+                    pass
+            print("FFmpeg proceso terminado forzosamente.")
 
     async def connect_and_check(self):
         if not self.client.is_connected():
@@ -150,7 +164,6 @@ class TelegramService:
         except Exception as e:
             print("analyze error:", e)
 
-        # Fallback metadata con hachoir (por si ffmpeg fallara en el .exe)
         if info["duration"] <= 1 or info["width"] <= 1:
             try:
                 from hachoir.parser import createParser
@@ -176,7 +189,6 @@ class TelegramService:
     # ═════════════════════════════════════════════════════════════
     def remux_faststart(self, input_path):
         """Copia streams sin re-codificar y pone moov al inicio. Muy rapido."""
-        # Generar la ruta en la carpeta temporal de Windows/OS
         filename = os.path.basename(input_path).rsplit(".", 1)[0] + "_fs.mp4"
         output_path = os.path.join(tempfile.gettempdir(), filename)
         
@@ -185,11 +197,11 @@ class TelegramService:
             "-c", "copy", "-movflags", "+faststart",
             output_path,
         ]
-        process = subprocess.run(cmd, **_silent_subprocess_kwargs())
-        if process.returncode != 0:
-            print("Remux error:", process.stderr.decode("utf-8", errors="ignore")[-300:])
-            return None
-        if not os.path.exists(output_path) or os.path.getsize(output_path) < 10_000:
+        # Cambiamos a Popen para control de terminación
+        self.current_process = subprocess.Popen(cmd, **_silent_subprocess_kwargs())
+        self.current_process.wait()
+        
+        if self.current_process.returncode != 0:
             return None
         return output_path
 
@@ -197,7 +209,6 @@ class TelegramService:
     # RE-ENCODE (solo cuando el codec NO es compatible)
     # ═════════════════════════════════════════════════════════════
     def encode_video(self, input_path):
-        # Generar la ruta en la carpeta temporal de Windows/OS
         filename = os.path.basename(input_path).rsplit(".", 1)[0] + "_encoded.mp4"
         output_path = os.path.join(tempfile.gettempdir(), filename)
         
@@ -210,11 +221,11 @@ class TelegramService:
             "-movflags", "+faststart",
             output_path,
         ]
-        process = subprocess.run(cmd, **_silent_subprocess_kwargs())
-        if process.returncode != 0:
-            print("FFmpeg error:", process.stderr.decode("utf-8", errors="ignore")[-300:])
-            return None
-        if not os.path.exists(output_path) or os.path.getsize(output_path) < 10_000:
+        # Cambiamos a Popen para control de terminación
+        self.current_process = subprocess.Popen(cmd, **_silent_subprocess_kwargs())
+        self.current_process.wait()
+        
+        if self.current_process.returncode != 0:
             return None
         return output_path
 
@@ -222,7 +233,6 @@ class TelegramService:
     # THUMBNAIL (max 320px, JPEG <200KB)
     # ═════════════════════════════════════════════════════════════
     def generate_thumbnail(self, video_path, duration):
-        # Usar la carpeta temporal
         raw_thumb = os.path.join(tempfile.gettempdir(), "thumb_raw.jpg")
         final_thumb = os.path.join(tempfile.gettempdir(), "thumb.jpg")
         seek_time = max(0.1, duration * 0.1)
@@ -237,7 +247,9 @@ class TelegramService:
             raw_thumb,
         ]
         try:
-            subprocess.run(cmd, **_silent_subprocess_kwargs())
+            self.current_process = subprocess.Popen(cmd, **_silent_subprocess_kwargs())
+            self.current_process.wait()
+            
             if not os.path.exists(raw_thumb):
                 return None
             with Image.open(raw_thumb) as img:
@@ -248,12 +260,6 @@ class TelegramService:
             return final_thumb
         except Exception as e:
             print("Thumbnail error:", e)
-            for p in (raw_thumb, final_thumb):
-                if os.path.exists(p):
-                    try:
-                        os.remove(p)
-                    except:
-                        pass
             return None
 
     # ═════════════════════════════════════════════════════════════
@@ -281,6 +287,10 @@ class TelegramService:
             temp_file = self.encode_video(file_path)
             final_path = temp_file if temp_file else file_path
 
+        # Si el proceso fue cancelado durante FFmpeg, final_path será None o fallará
+        if not final_path or not os.path.exists(final_path):
+            return None
+
         thumb_path = self.generate_thumbnail(final_path, duration)
 
         attributes = [
@@ -307,15 +317,11 @@ class TelegramService:
             )
         finally:
             if thumb_path and os.path.exists(thumb_path):
-                try:
-                    os.remove(thumb_path)
-                except:
-                    pass
+                try: os.remove(thumb_path)
+                except: pass
             if temp_file and os.path.exists(temp_file) and temp_file != file_path:
-                try:
-                    os.remove(temp_file)
-                except:
-                    pass
+                try: os.remove(temp_file)
+                except: pass
 
     async def disconnect(self):
         if self.client:
