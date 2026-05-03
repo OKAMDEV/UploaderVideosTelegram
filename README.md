@@ -251,6 +251,7 @@ Distribuido bajo licencia **MIT**. Ver `LICENSE` para más información.
 - [imageio-ffmpeg](https://github.com/imageio/imageio-ffmpeg) — binarios de FFmpeg
 - [hachoir](https://github.com/vstinner/hachoir) — metadata de archivos multimedia
 - [Pillow](https://python-pillow.org/) — manipulación de imágenes
+- El programa se hizo haciendo uso de IA, para probar los limites de esta, con una aplicación que requería personalmente.
 
 ---
 
