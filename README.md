@@ -28,12 +28,6 @@ Evita subidas duplicadas, optimiza automáticamente los videos para reproducció
 
 ## 🖼️ Capturas
 
-*(Añade aquí tus capturas de pantalla)*
-
-```
-docs/screenshot_main.png
-docs/screenshot_progress.png
-```
 
 ---
 
@@ -45,7 +39,7 @@ El proyecto sigue principios **SOLID** y aplica varios patrones de diseño:
 TelegramUploader/
 ├── main.py                      # Punto de entrada
 ├── assets/
-│   └── logo.png
+│   └── logo.ico
 └── src/
     ├── __init__.py
     ├── paths.py                 # Resolución de rutas (dev / .exe)
@@ -84,7 +78,7 @@ TelegramUploader/
 ### 1. Clonar el repositorio
 
 ```bash
-git clone https://github.com/TU_USUARIO/TelegramUploader.git
+git clone https://github.com/OKAMDEV/UploaderVideosTelegram.git
 cd TelegramUploader
 ```
 
@@ -162,15 +156,7 @@ Esto permite ejecutar la app cuantas veces quieras sin duplicar contenido.
 Con PyInstaller:
 
 ```powershell
-pyinstaller --noconfirm --onefile --windowed --name \"TelegramUploaderPro\" `
-  --icon \"assets\logo.png\" `
-  --collect-all telethon `
-  --collect-all PIL `
-  --collect-all hachoir `
-  --hidden-import imageio_ffmpeg `
-  --add-binary \"C:\Python314\Lib\site-packages\imageio_ffmpeg\binaries\ffmpeg-win-x86_64-v7.1.exe;.\" `
-  --add-data \"assets\logo.png;assets\" `
-  --clean main.py
+pyinstaller --noconfirm --onefile --windowed --name "TelegramUploaderPro" ` --icon "assets\logo.ico" ` --collect-all telethon ` --collect-all PIL ` --collect-all hachoir ` --hidden-import imageio_ffmpeg ` --add-binary "C:\Python314\Lib\site-packages\imageio_ffmpeg\binaries\ffmpeg-win-x86_64-v7.1.exe;." ` --add-data "assets\logo.ico;assets" ` --add-data "assets\logo.png;assets" ` --clean main.py
 ```
 
 > Ajusta la ruta de `ffmpeg-win-x86_64-v7.1.exe` según tu instalación de `imageio_ffmpeg`.
@@ -216,7 +202,7 @@ Falta el `--add-binary` de `ffmpeg` en tu comando de PyInstaller. Revisa la secc
 <details>
 <summary><b>El logo no aparece en la ventana</b></summary>
 
-Verifica que incluyas `--add-data \"assets\logo.png;assets\"` al compilar.
+Verifica que incluyas `--add-data \"assets\logo.ico;assets\"` al compilar.
 </details>
 
 ---
@@ -254,8 +240,7 @@ Distribuido bajo licencia **MIT**. Ver `LICENSE` para más información.
 
 **Tu Nombre**
 
-- GitHub: [@TU_USUARIO](https://github.com/TU_USUARIO)
-- Telegram: [@tu_usuario](https://t.me/tu_usuario)
+- GitHub: [@OKAM](https://github.com/OKAMDEV)
 
 ---
 
