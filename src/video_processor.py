@@ -71,7 +71,7 @@ class FastStartRemux(ProcessingStrategy):
         ]
         proc = subprocess.Popen(cmd, **silent_subprocess_kwargs())
         self._registry.set(proc)
-        proc.wait()
+        proc.communicate()
         if proc.returncode != 0 or not os.path.exists(output):
             return input_path, False
         return output, True
@@ -97,7 +97,7 @@ class FullReEncode(ProcessingStrategy):
         ]
         proc = subprocess.Popen(cmd, **silent_subprocess_kwargs())
         self._registry.set(proc)
-        proc.wait()
+        proc.communicate()
         if proc.returncode != 0 or not os.path.exists(output):
             return input_path, False
         return output, True

@@ -39,7 +39,7 @@ class ThumbnailGenerator:
             proc = subprocess.Popen(cmd, **silent_subprocess_kwargs())
             if self._process_registry:
                 self._process_registry.set(proc)
-            proc.wait()
+            proc.communicate()
 
             if not os.path.exists(raw):
                 return None
